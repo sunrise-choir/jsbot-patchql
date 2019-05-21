@@ -2,7 +2,7 @@ const { execFile } = require('child_process')
 const os = require('os')
 const path = require('path')
 const envPaths = require('env-paths')
-const { mkdirSync } = require('fs')
+const mkdirp = require('mkdirp')
 
 const builds = [
   'linux-x64',
@@ -46,10 +46,7 @@ module.exports = {
         const execName = `ssb-patchql${platform === 'win32' ? '.exe' : ''}`
         const execPath = path.join(__dirname, 'bin', system, execName)
 
-        try {
-          mkdirSync(databaseDir)
-        } catch (e) {
-        }
+        mkdirp.sync(databaseDir)
 
         childProcess = execFile(execPath, [], { env }, (error, stdout, stderr) => {
           if (error) {
