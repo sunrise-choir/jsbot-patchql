@@ -1,39 +1,75 @@
 const { execFile } = require('child_process')
 const os = require('os')
 const path = require('path')
+const envPaths = require('env-paths')
+const { mkdirSync } = require('fs')
+
+const builds = [
+  'linux-x64',
+  'linux-arm64',
+  'android-arm64',
+  'darwin-x64',
+  'win32-x64',
+  'win32-x32'
+]
 
 module.exports = {
   name: 'jsbot-patchql',
-  version: '1.0.0',
+  version: '1.0.1',
   manifest: require('./manifest.json'),
   init: function (ssb, config) {
-    const env = {
-      'DATABASE_URL': path.join(__dirname, 'ssb-patchql.sqlite'),
+    const paths = envPaths('jsbot-patchql') // TODO: if this is in eg. patchbay, it'd be nice to put it in patchbay dir. Later tho.
+    const databaseDir = paths.data
+    const defaultEnv = {
+      'DATABASE_URL': path.join(databaseDir, 'ssb-patchql.sqlite'),
       'OFFSET_LOG_PATH': path.join(config.path, 'flume', 'log.offset'),
       'SSB_SECRET_KEY': ssb.keys.private,
       'SSB_PUB_KEY': ssb.keys.id
     }
+    let childProcess
 
-    const arch = os.arch()
-    const platform = os.platform()
+    function start (opts) {
+      console.log('Starting jsbot-patchql on port 8080. Try out some graphql at http://localhost:8080')
+      // process is already running
+      if (childProcess && !childProcess.killed) {
+        return
+      }
 
-    if (
-      (platform === 'linux' && arch === 'x64') ||
-      (platform === 'linux' && arch === 'arm64') ||
-      (platform === 'android' && arch === 'arm64') ||
-      (platform === 'darwin' && arch === 'x64') ||
-      (platform === 'win32' && arch === 'x32') ||
-      (platform === 'win32' && arch === 'x64')) {
-      const execName = `ssb-patchql${platform === 'win32' ? '.exe' : ''}`
-      const execPath = path.join(__dirname, 'bin', `${platform}-${arch}`, execName)
+      const env = Object.assign({}, defaultEnv, opts)
 
-      execFile(execPath, [], { cwd: __dirname, env }, (error, stdout, stderr) => {
-        if (error) {
-          throw error
+      const arch = os.arch()
+      const platform = os.platform()
+
+      const system = `${platform}-${arch}`
+
+      if (builds.includes(system)) {
+        const execName = `ssb-patchql${platform === 'win32' ? '.exe' : ''}`
+        const execPath = path.join(__dirname, 'bin', system, execName)
+
+        try {
+          mkdirSync(databaseDir)
+        } catch (e) {
         }
-      })
-    } else {
-      console.log(`No sbot-patchql builds for your arch ${platform}-${arch}`)
+
+        childProcess = execFile(execPath, [], { env }, (error, stdout, stderr) => {
+          if (error) {
+            console.error(error)
+          }
+        })
+      } else {
+        console.error(`No sbot-patchql builds for your arch ${platform}-${arch}`)
+      }
+    }
+
+    function stop () {
+      if (childProcess) {
+        childProcess.kill()
+      }
+    }
+    return {
+      start,
+      stop
     }
   }
+
 }

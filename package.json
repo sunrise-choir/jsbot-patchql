@@ -8,5 +8,8 @@
   },
   "keywords": [],
   "author": "Piet Geursen",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "env-paths": "^2.2.0"
+  }
 }
