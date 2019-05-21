@@ -3,7 +3,7 @@ const os = require('os')
 const path = require('path')
 
 module.exports = {
-  name: 'sbot-patchql',
+  name: 'jsbot-patchql',
   version: '1.0.0',
   manifest: require('./manifest.json'),
   init: function (ssb, config) {
@@ -16,20 +16,24 @@ module.exports = {
 
     const arch = os.arch()
     const platform = os.platform()
-    let execPath
 
-    if (platform === 'linux' && arch === 'x64') {
-      execPath = path.join(__dirname, `${platform}-${arch}`, 'ssb-patchql')
-    }
+    if (
+      (platform === 'linux' && arch === 'x64') ||
+      (platform === 'linux' && arch === 'arm64') ||
+      (platform === 'android' && arch === 'arm64') ||
+      (platform === 'darwin' && arch === 'x64') ||
+      (platform === 'win32' && arch === 'x32') ||
+      (platform === 'win32' && arch === 'x64')) {
+      const execName = `ssb-patchql${platform === 'win32' ? '.exe' : ''}`
+      const execPath = path.join(__dirname, 'bin', `${platform}-${arch}`, execName)
 
-    if (execPath) {
       execFile(execPath, [], { cwd: __dirname, env }, (error, stdout, stderr) => {
         if (error) {
           throw error
         }
       })
     } else {
-      console.log('No sbot-patchql builds for your arch :(')
+      console.log(`No sbot-patchql builds for your arch ${platform}-${arch}`)
     }
   }
 }
