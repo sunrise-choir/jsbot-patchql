@@ -8,7 +8,7 @@
   },
   "keywords": [],
   "author": "Piet Geursen",
-  "license": "MIT",
+  "license": "AGPL-3.0",
   "dependencies": {
     "env-paths": "^2.2.0"
   }
