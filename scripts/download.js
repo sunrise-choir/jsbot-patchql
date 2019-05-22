@@ -21,7 +21,10 @@ const binName = 'ssb-patchql'
 const arch = os.arch()
 const platform = os.platform()
 
-download({ arch, platform })
+download({ arch, platform }, (err) => {
+  if (err) throw err
+  console.log('Download complete')
+})
 
 // Useful for testing
 // downloadAll()
@@ -61,11 +64,7 @@ function download ({ arch, platform }, cb) {
     pull.asyncMap(unpack({ packedFilePath, unpackPath, platform })),
     pull.asyncMap(createBinDir({ binPath })),
     pull.asyncMap(moveBinary({ unpackPath, binPath, binName, platform })),
-    pull.collect((err) => {
-      cb(err)
-      if (err) throw err
-      console.log('Download complete')
-    })
+    pull.collect(cb)
   )
 }
 
