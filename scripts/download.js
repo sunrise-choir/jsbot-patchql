@@ -20,29 +20,54 @@ const binName = 'ssb-patchql'
 
 const arch = os.arch()
 const platform = os.platform()
-const version = getVersionString()
 
-const triple = buildTriple({ arch, platform })
-const fileExtension = getFileExtension({ platform })
+download({ arch, platform })
 
-const fileName = getReleaseFilename({ version, fileExtension, triple })
-const url = getDownloadUrl({ fileName, version })
+// Useful for testing
+// downloadAll()
 
-const packedFilePath = `${paths.temp}/${fileName}`
-const unpackPath = paths.temp
-const binPath = path.join('bin', `${platform}-${arch}`)
+function downloadAll () {
+  const builds = [
+    { arch: 'x64', platform: 'linux' },
+    { arch: 'arm64', platform: 'linux' },
+    { arch: 'arm64', platform: 'android' },
+    { arch: 'x64', platform: 'darwin' },
+    { arch: 'x64', platform: 'win32' },
+    { arch: 'x32', platform: 'win32' }
+  ]
+  pull(
+    pull.values(builds),
+    pull.asyncMap(download),
+    pull.collect(console.log)
+  )
+}
 
-pull(
-  pull.once({ packedFilePath }),
-  pull.asyncMap(download),
-  pull.asyncMap(unpack({ packedFilePath, unpackPath, platform })),
-  pull.asyncMap(createBinDir({ binPath })),
-  pull.asyncMap(moveBinary({ unpackPath, binPath, binName, platform })),
-  pull.collect((err) => {
-    if (err) throw err
-    console.log('Download complete')
-  })
-)
+function download ({ arch, platform }, cb) {
+  const version = getVersionString()
+
+  const triple = buildTriple({ arch, platform })
+  const fileExtension = getFileExtension({ platform })
+
+  const fileName = getReleaseFilename({ version, fileExtension, triple })
+  const url = getDownloadUrl({ fileName, version })
+
+  const packedFilePath = `${paths.temp}/${fileName}`
+  const unpackPath = paths.temp
+  const binPath = path.join('bin', `${platform}-${arch}`)
+
+  pull(
+    pull.once({ packedFilePath }),
+    pull.asyncMap(fetchRelease({ url })),
+    pull.asyncMap(unpack({ packedFilePath, unpackPath, platform })),
+    pull.asyncMap(createBinDir({ binPath })),
+    pull.asyncMap(moveBinary({ unpackPath, binPath, binName, platform })),
+    pull.collect((err) => {
+      cb(err)
+      if (err) throw err
+      console.log('Download complete')
+    })
+  )
+}
 
 function createBinDir ({ binPath }) {
   return function (_, cb) {
@@ -86,11 +111,13 @@ function unpack ({ packedFilePath, unpackPath, platform }) {
   }
 }
 
-function download ({ packedFilePath }, cb) {
-  pull(
-    toPull.source(request(url)),
-    writeFile(packedFilePath, cb)
-  )
+function fetchRelease ({ url }) {
+  return function ({ packedFilePath }, cb) {
+    pull(
+      toPull.source(request(url)),
+      writeFile(packedFilePath, cb)
+    )
+  }
 }
 
 function getVersionString () {
