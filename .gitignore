@@ -1,3 +1,4 @@
 *.sqlite*
 public
 node_modules
+bin
