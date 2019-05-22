@@ -1,6 +1,6 @@
 {
   "name": "jsbot-patchql",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "ssbPatchqlVersion": "v0.1.1",
   "description": "",
   "main": "index.js",
