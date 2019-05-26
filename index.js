@@ -63,6 +63,12 @@ module.exports = {
         childProcess.kill()
       }
     }
+    
+    ssb.close.hook(function (fn, args) {
+      stop()
+      return fn.apply(this, args)
+    })
+    
     return {
       start,
       stop
