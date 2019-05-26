@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 const os = require('os')
 const mkdirp = require('mkdirp')
 const envPaths = require('env-paths')

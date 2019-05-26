@@ -6,7 +6,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "postinstall": "scripts/download.js"
+    "postinstall": "node scripts/download.js"
   },
   "repository": "https://github.com/sunrise-choir/jsbot-patchql",
   "keywords": [],
